@@ -1,5 +1,15 @@
 import requests
 import time
+import os
+import urllib.request
+import urllib.error
+import glob
+from PIL import Image
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -15,7 +25,7 @@ def handle_death(death):
     get_image(death)
 
 def get_image(death):
-    url = "https://www.google.com/search?q="+searchtext+"&source=lnms&tbm=isch"
+    url = "https://www.google.com/search?q="+death+"&source=lnms&tbm=isch"
     driver = webdriver.Firefox()
     driver.get(url)
 
@@ -29,23 +39,22 @@ def get_image(death):
     print ("Total images:", len(imgs), "\n")
     print ("Downloading...")
     for img in imgs:
-        img_count += 1
         img_url = img.get_attribute('src')
         img_type = "jpg"
         #print ("Downloading image", img_count, ": ", img_url)
         try:
-            if img_type not in extensions:
-                img_type = "jpg"
-            req = urllib.request.Request(img_url, headers=headers)
-            raw_img = urllib.request.urlopen(req).read()
-            f = open(download_path+death.replace(" ", "_")+"."+img_type, "wb")
-            f.write(raw_img)
-            f.close
+            urllib.request.urlretrieve(img_url, "dataset/"+death.replace(" ", "_")+"."+img_type)
+            #req = urllib.request.Request(img_url, headers=headers)
+            #raw_img = urllib.request.urlopen(req).read()
+            #f = open("dataset/"+death.replace(" ", "_")+"."+img_type, "wb")
+            #f.write(raw_img)
+            #f.close
         except Exception as e:
-            print("Download failed:", e)
+            print("Download failed:", e) # Download failed: [Errno 2] No such file or directory: 'dataset/Big_Pokey.jpg'
         finally:
             print
             break
+    driver.quit()
     resize_images(death)
 
 def resize_images(name):
@@ -96,6 +105,8 @@ while True:
         deadpeople.append(item['itemLabel']['value'])
 
     for idx, x in enumerate(deadpeople):
+        #if x == 'Max Morath' or x == 'Big Pokey':
+            #handle_death(x)
         if not olddeadpeople:
             break
         if x not in olddeadpeople:
