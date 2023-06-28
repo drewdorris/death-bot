@@ -4,6 +4,7 @@ import os
 import urllib.request
 import urllib.error
 import glob
+import tweepy
 from PIL import Image
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -16,60 +17,21 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 olddeadpeople = []
-
-# this method is kind of unnecessary but it cleans up things a bit
-# just prints the death message and calls the image searcher
-def handle_death(death):
-    print(datetime.now(), death)
-
-    get_image(death)
-
-def get_image(death):
-    url = "https://www.google.com/search?q="+death+"&source=lnms&tbm=isch"
-    driver = webdriver.Firefox()
-    driver.get(url)
-
-    headers = {}
-    headers['User-Agent'] = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
-    extensions = {"jpg", "jpeg", "png", "gif"}
-
-    # imges = driver.find_elements_by_xpath('//div[@class="rg_meta"]') # not working anymore
-    # imges = driver.find_elements_by_xpath('//div[contains(@class,"rg_meta")]')
-    imgs = driver.find_elements_by_css_selector("img.Q4LuWd")
-    print ("Total images:", len(imgs), "\n")
-    print ("Downloading...")
-    for img in imgs:
-        img_url = img.get_attribute('src')
-        img_type = "jpg"
-        #print ("Downloading image", img_count, ": ", img_url)
-        try:
-            urllib.request.urlretrieve(img_url, "dataset/"+death.replace(" ", "_")+"."+img_type)
-            #req = urllib.request.Request(img_url, headers=headers)
-            #raw_img = urllib.request.urlopen(req).read()
-            #f = open("dataset/"+death.replace(" ", "_")+"."+img_type, "wb")
-            #f.write(raw_img)
-            #f.close
-        except Exception as e:
-            print("Download failed:", e) # Download failed: [Errno 2] No such file or directory: 'dataset/Big_Pokey.jpg'
-        finally:
-            print
-            break
-    driver.quit()
-    resize_images(death)
-
-def resize_images(name):
-    print("Converting image...")
-    time.sleep(2)
-    for file in glob.glob("dataset\\" + name.replace(" ", "_") + "\\*.jpg"):
-        i = Image.open(file);
-        i = i.resize((500, 400))
-        i = i.convert('RGB')
-        i.save(file)
+consumer_key = "xxx"
+consumer_secret = "xxx"
+access_token = "xxx"
+access_token_secret = "xxx"
 
 # adding path to geckodriver to the OS environment variable
 # assuming that it is stored at the same path as this script
 # this is for the image searching stuff
 os.environ["PATH"] += os.pathsep + os.getcwd()
+
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+
+api = tweepy.API(auth)
+#api.update_status("asdf")
 
 while True:
     query = '''PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -105,10 +67,8 @@ while True:
         deadpeople.append(item['itemLabel']['value'])
 
     for idx, x in enumerate(deadpeople):
-        #if x == 'Max Morath' or x == 'Big Pokey':
-            #handle_death(x)
-        if not olddeadpeople:
-            break
+        #if not olddeadpeople:
+        #    break
         if x not in olddeadpeople:
             if len(x) > 2 and x[0] == 'Q' and x[1].isdigit():
                 print('whaa', x)
@@ -117,3 +77,52 @@ while True:
     
     olddeadpeople = deadpeople
     time.sleep(60 * 5)
+
+# this method is kind of unnecessary but it cleans up things a bit
+# just prints the death message and calls the image searcher
+def handle_death(death):
+    print(datetime.now(), death)
+
+    img_url = get_image(death)
+    print(img_url)
+
+def get_image(death):
+    url = "https://www.google.com/search?q="+death+"&source=lnms&tbm=isch"
+    driver = webdriver.Firefox()
+    driver.get(url)
+
+    headers = {}
+    headers['User-Agent'] = "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
+    extensions = {"jpg", "jpeg", "png", "gif"}
+
+    # imges = driver.find_elements_by_xpath('//div[@class="rg_meta"]') # not working anymore
+    # imges = driver.find_elements_by_xpath('//div[contains(@class,"rg_meta")]')
+    imgs = driver.find_elements_by_css_selector("img.Q4LuWd")
+    print ("Total images:", len(imgs), "\n")
+    print ("Downloading...")
+    for img in imgs:
+        img_url = img.get_attribute('src')
+        #print ("Downloading image", img_count, ": ", img_url)
+        try:
+            urllib.request.urlretrieve(img_url, "dataset/"+death.replace(" ", "_")+".jpg")            #req = urllib.request.Request(img_url, headers=headers)
+            #raw_img = urllib.request.urlopen(req).read()
+            #f = open("dataset/"+death.replace(" ", "_")+"."+img_type, "wb")
+            #f.write(raw_img)
+            #f.close
+        except Exception as e:
+            print("Download failed:", e) # Download failed: [Errno 2] No such file or directory: 'dataset/Big_Pokey.jpg'
+        finally:
+            #print
+            break
+    driver.quit()
+    resize_images(death)
+    return "dataset/"+death.replace(" ", "_")+".jpg"
+
+def resize_images(name):
+    print("Converting image...")
+    time.sleep(2)
+    for file in glob.glob("dataset\\" + name.replace(" ", "_") + "\\*.jpg"):
+        i = Image.open(file);
+        i = i.resize((500, 400))
+        i = i.convert('RGB')
+        i.save(file)
