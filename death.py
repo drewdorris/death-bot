@@ -33,51 +33,6 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 #api.update_status("asdf")
 
-while True:
-    query = '''PREFIX wikibase: <http://wikiba.se/ontology#>
-    PREFIX wd: <http://www.wikidata.org/entity/>
-    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-    SELECT DISTINCT ?item ?itemLabel ?article
-    {
-            ?item wdt:P570 ?dod
-            FILTER ( ?dod > "2020-12-08T00:00:00Z"^^xsd:dateTime)
-            FILTER ( ?dod > (now()-"P32D"^^xsd:duration) && ?dod < now() )
-            ?item wdt:P31 wd:Q5 .
-        ?article schema:about ?item .
-        ?article schema:inLanguage "en" .
-        FILTER (SUBSTR(str(?article), 1, 25) = "https://en.wikipedia.org/")
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-    }
-    ORDER BY DESC(?dod) ?item
-    LIMIT 200
-    '''
-
-    url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
-    dataRaw = requests.get(url, params={'query': query, 'format': 'json'}, headers={'User-Agent': 'DeathBot/0.0 (https://github.com/drewdorris; contact@dorrisd.com)'})
-    if not dataRaw:
-        print('Data not found!')
-        time.sleep(60 * 5)
-        continue
-    
-    data = dataRaw.json()
-    deadpeople = []
-    for item in data['results']['bindings']:
-        deadpeople.append(item['itemLabel']['value'])
-
-    for idx, x in enumerate(deadpeople):
-        #if not olddeadpeople:
-        #    break
-        if x not in olddeadpeople:
-            if len(x) > 2 and x[0] == 'Q' and x[1].isdigit():
-                print('whaa', x)
-                continue
-            handle_death(x)
-    
-    olddeadpeople = deadpeople
-    time.sleep(60 * 5)
-
 # this method is kind of unnecessary but it cleans up things a bit
 # just prints the death message and calls the image searcher
 def handle_death(death):
@@ -85,6 +40,10 @@ def handle_death(death):
 
     img_url = get_image(death)
     print(img_url)
+
+    media1 = api.simple_upload(img_url)
+    media2 = api.simple_upload("rob.jpg")
+    api.update_status(status=death + " just passed away, and I just passed gas! #fart", media_ids=[media1.media_id, media2.media_id])
 
 def get_image(death):
     url = "https://www.google.com/search?q="+death+"&source=lnms&tbm=isch"
@@ -126,3 +85,48 @@ def resize_images(name):
         i = i.resize((500, 400))
         i = i.convert('RGB')
         i.save(file)
+
+while True:
+    query = '''PREFIX wikibase: <http://wikiba.se/ontology#>
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+    SELECT DISTINCT ?item ?itemLabel ?article
+    {
+            ?item wdt:P570 ?dod
+            FILTER ( ?dod > "2020-12-08T00:00:00Z"^^xsd:dateTime)
+            FILTER ( ?dod > (now()-"P32D"^^xsd:duration) && ?dod < now() )
+            ?item wdt:P31 wd:Q5 .
+        ?article schema:about ?item .
+        ?article schema:inLanguage "en" .
+        FILTER (SUBSTR(str(?article), 1, 25) = "https://en.wikipedia.org/")
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+    }
+    ORDER BY DESC(?dod) ?item
+    LIMIT 200
+    '''
+
+    url = 'https://query.wikidata.org/bigdata/namespace/wdq/sparql'
+    dataRaw = requests.get(url, params={'query': query, 'format': 'json'}, headers={'User-Agent': 'DeathBot/0.0 (https://github.com/drewdorris; contact@dorrisd.com)'})
+    if not dataRaw:
+        print('Data not found!')
+        time.sleep(60 * 5)
+        continue
+    
+    data = dataRaw.json()
+    deadpeople = []
+    for item in data['results']['bindings']:
+        deadpeople.append(item['itemLabel']['value'])
+
+    for idx, x in enumerate(deadpeople):
+        if not olddeadpeople:
+            break
+        if x not in olddeadpeople:
+            if len(x) > 2 and x[0] == 'Q' and x[1].isdigit():
+                print('??? ', x)
+                continue
+            handle_death(x)
+    
+    olddeadpeople = deadpeople
+    time.sleep(60 * 5)
