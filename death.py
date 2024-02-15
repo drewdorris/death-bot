@@ -7,6 +7,7 @@ import glob
 import tweepy
 from PIL import Image
 from selenium import webdriver
+from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -17,10 +18,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 olddeadpeople = []
-consumer_key = "xxx"
-consumer_secret = "xxx"
-access_token = "xxx"
-access_token_secret = "xxx"
+consumer_key = "qSzhJCfrQQJCwW2O5FhCWZVQx"
+consumer_secret = "4i0KMxPocfsxS7K2DqGATGlN9nrhhJiaGmQbYtAZgj0c0CtTNj"
+access_token = "1672314183369498630-I4Rre9xrcc2Sdbne3fZBsVenWFivLK"
+access_token_secret = "IIGVJMCGGx4AKnsKqJiwntmNb3L6Xwf9V7TOI3TDeT8so"
 
 # adding path to geckodriver to the OS environment variable
 # assuming that it is stored at the same path as this script
@@ -29,6 +30,9 @@ os.environ["PATH"] += os.pathsep + os.getcwd()
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
+
+client = tweepy.Client(consumer_key=consumer_key, consumer_secret=consumer_secret,
+                       access_token=access_token, access_token_secret=access_token_secret)
 
 api = tweepy.API(auth)
 #api.update_status("asdf")
@@ -43,11 +47,14 @@ def handle_death(death):
 
     media1 = api.simple_upload(img_url)
     media2 = api.simple_upload("rob.jpg")
-    api.update_status(status=death + " just passed away, and I just passed gas! #fart", media_ids=[media1.media_id, media2.media_id])
+    #api.update_status(status=death + " just passed away, and I just passed gas! #fart", media_ids=[media1.media_id, media2.media_id])
+    response = client.create_tweet(text=death + " just passed away, and I just passed gas! #fart", media_ids=[media1.media_id, media2.media_id])
 
 def get_image(death):
     url = "https://www.google.com/search?q="+death+"&source=lnms&tbm=isch"
-    driver = webdriver.Firefox()
+    opts = FirefoxOptions()
+    opts.add_argument("--headless")
+    driver = webdriver.Firefox(options=opts)
     driver.get(url)
 
     headers = {}
