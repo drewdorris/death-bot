@@ -18,10 +18,10 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 olddeadpeople = []
-consumer_key = "qSzhJCfrQQJCwW2O5FhCWZVQx"
-consumer_secret = "4i0KMxPocfsxS7K2DqGATGlN9nrhhJiaGmQbYtAZgj0c0CtTNj"
-access_token = "1672314183369498630-I4Rre9xrcc2Sdbne3fZBsVenWFivLK"
-access_token_secret = "IIGVJMCGGx4AKnsKqJiwntmNb3L6Xwf9V7TOI3TDeT8so"
+consumer_key = "xxx"
+consumer_secret = "xxx"
+access_token = "xxx"
+access_token_secret = "xxx"
 
 # adding path to geckodriver to the OS environment variable
 # assuming that it is stored at the same path as this script
